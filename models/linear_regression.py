@@ -26,8 +26,8 @@ def evaluate_linear_reg_performance(y_true_data, y_pred_data, target_names):
     if y_p.shape != y_t.shape and y_p.size == y_t.size:
         y_p = y_p.reshape(y_t.shape)
 
-    print(f"{'Task Name':<20} | {'a20-Index':<12} | {'RMSE':<10}")
-    print("-" * 50)
+    print(f"{'RMSE':<10}")
+    #print("-" * 50)
     
     rmse_scores = []
 
