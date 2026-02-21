@@ -30,8 +30,8 @@ def evaluate_svm_performance(y_true_data, y_pred_data, target_names):
     if y_p.shape != y_t.shape and y_p.size == y_t.size:
         y_p = y_p.reshape(y_t.shape)
 
-    print(f"{'Task Name':<20} | {'a20-Index':<12} | {'RMSE':<10}")
-    print("-" * 50)
+    print(f"{'RMSE':<10}")
+    #print("-" * 50)
     
     a20_list = []
     rmse_list = []
@@ -45,7 +45,7 @@ def evaluate_svm_performance(y_true_data, y_pred_data, target_names):
         rmse = np.sqrt(mean_squared_error(true_col, pred_col))
         rmse_list.append(rmse)
         
-        print(f"{name:<20} | {a20:.4f}      | {rmse:.4f}")
+        print(f"{rmse:.4f}")
 
     print("-" * 50)
     print(f"{'Average/Mean':<20} | {np.mean(a20_list):.4f}      | {np.mean(rmse_list):.4f}")
