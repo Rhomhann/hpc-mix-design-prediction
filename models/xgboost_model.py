@@ -35,9 +35,9 @@ ef evaluate_xgb_performance(y_true_data, y_pred_data, target_names):
         rmse = np.sqrt(mean_squared_error(true_col, pred_col))
         rmse_scores.append(rmse)
         
-        print(f"{name:<20} | {a20:.4f}      | {rmse:.4f}")
+        print(f"{rmse:.4f}")
 
-    print("-" * 50)
+    #print("-" * 50)
     print(f"{np.mean(rmse_scores):.4f}")
 
 # --- EXECUTION ---
