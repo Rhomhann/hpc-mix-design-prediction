@@ -5,7 +5,7 @@
 This repository contains the code for the paper:  
 **"Automating High-Performance Concrete Mix Design: A Deep Learning Framework for Inverse Prediction of Composition from Target Strength and Age"**
 
-## 📋 Overview
+## Overview
 
 We implement five machine learning models for inverse prediction of HPC mix proportions from target strength and age:
 
@@ -15,13 +15,13 @@ We implement five machine learning models for inverse prediction of HPC mix prop
 - **Random Forest**
 - **Multi-output Linear Regression**
 
-## 📊 Dataset
+## Dataset
 
 The [Concrete Compressive Strength dataset](https://archive.ics.uci.edu/ml/datasets/Concrete+Compressive+Strength) from the UCI Machine Learning Repository (Yeh, 1998) is used:
 - 1,030 observations
 - 8 input features → 7 output components (cement, slag, fly ash, water, admixture, coarse aggregate, fine aggregate)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 ```bash
