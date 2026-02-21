@@ -33,7 +33,6 @@ def evaluate_svm_performance(y_true_data, y_pred_data, target_names):
     print(f"{'RMSE':<10}")
     #print("-" * 50)
     
-    a20_list = []
     rmse_list = []
 
     for i, name in enumerate(target_names):
@@ -48,7 +47,7 @@ def evaluate_svm_performance(y_true_data, y_pred_data, target_names):
         print(f"{rmse:.4f}")
 
     print("-" * 50)
-    print(f"{'Average/Mean':<20} | {np.mean(a20_list):.4f}      | {np.mean(rmse_list):.4f}")
+    print(f"{np.mean(rmse_list):.4f}")
 
 # --- EXECUTION ---
 # Ensure y_test is your actual label variable and not a function name
