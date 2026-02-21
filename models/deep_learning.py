@@ -1,5 +1,6 @@
 #Import libraries
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import torch
@@ -11,6 +12,9 @@ from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 import torch.optim as optim
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+
 
 #Data loading
 conc_comp_str_data = pd.read_excel('Data/Concrete_Data.xls')
@@ -274,3 +278,99 @@ model_1_results = eval_model(model = model,
                            criterion = multitask_mse_loss,
                            accuracy_function = r2_score)
 model_1_results 
+
+#RMSE 
+
+def calculate_mtl_rmse(model, test_loader, target_cols):
+    """
+    Calculates the RMSE for each task in the CrossConnectedMTL architecture.
+    """
+    model.eval()
+    all_preds = {name: [] for name in target_cols}
+    all_trues = {name: [] for name in target_cols}
+
+    with torch.no_grad():
+        for x_batch, y_batch_dict in test_loader:
+            # Model returns dictionary: {'Cement': tensor, ...}
+            preds_dict = model(x_batch) 
+            
+            for name in target_cols:
+                all_preds[name].append(preds_dict[name].cpu().numpy())
+                all_trues[name].append(y_batch_dict[name].cpu().numpy())
+
+    print(f"\n{'Output Task':<20} | {'RMSE Score':<15}")
+    print("-" * 40)
+
+    total_rmse = 0
+    for name in target_cols:
+        # Concatenate batches and flatten to 1D
+        y_true = np.concatenate(all_trues[name]).flatten()
+        y_pred = np.concatenate(all_preds[name]).flatten()
+        
+        # Calculate RMSE: sqrt(mean_squared_error)
+        rmse_score = np.sqrt(mean_squared_error(y_true, y_pred))
+        
+        print(f"{name:<20} | {rmse_score:.4f}")
+        total_rmse += rmse_score
+
+    print("-" * 40)
+    print(f"{'Average RMSE':<20} | {total_rmse / len(target_cols):.4f}")
+
+# --- EXECUTION ---
+target_names = ['Cement', 'Furnace_Slag', 'Fly_ash', 'Water_content', 
+                'Admixture_content', 'Coarse_agg', 'Fine_agg']
+
+calculate_mtl_rmse(model, test_loader, target_names)
+
+#MAE
+def calculate_mtl_mae_unscaled(model, test_loader, target_cols, scaler):
+    """
+    Calculates MAE in original units (kg/m³) for the MTL model.
+    Fixes the 3D array error by ensuring 2D shapes before inverse_transform.
+    """
+    model.eval()
+    
+    all_preds_scaled = []
+    all_trues_scaled = []
+
+    with torch.no_grad():
+        for x_batch, y_batch_dict in test_loader:
+            preds_dict = model(x_batch)
+            
+            # Stack and ensure it is 2D (Batch Size, Number of Tasks)
+            # .squeeze() or .view(-1, len(target_cols)) handles extra dimensions
+            batch_preds = torch.stack([preds_dict[name].flatten() for name in target_cols], dim=1)
+            batch_trues = torch.stack([y_batch_dict[name].flatten() for name in target_cols], dim=1)
+            
+            all_preds_scaled.append(batch_preds.cpu().numpy())
+            all_trues_scaled.append(batch_trues.cpu().numpy())
+
+    # 2. Concatenate into (Total_Samples, 7)
+    y_pred_scaled = np.vstack(all_preds_scaled)
+    y_true_scaled = np.vstack(all_trues_scaled)
+
+    # Safety check: print shape to confirm it's (Samples, 7)
+    print(f"DEBUG: Scaled array shape: {y_pred_scaled.shape}")
+
+    # 3. Inverse Transform to original units (kg/m³)
+    y_pred_unscaled = scaler.inverse_transform(y_pred_scaled)
+    y_true_unscaled = scaler.inverse_transform(y_true_scaled)
+
+    # 4. Compute MAE per task
+    results = []
+    print(f"\n{'Output Task':<20} | {'MAE (kg/m³)':<15}")
+    print("-" * 40)
+
+    for i, name in enumerate(target_cols):
+        mae_score = mean_absolute_error(y_true_unscaled[:, i], y_pred_unscaled[:, i])
+        results.append({"Task": name, "MAE": mae_score})
+        print(f"{name:<20} | {mae_score:.4f}")
+
+    mean_mae = np.mean([r["MAE"] for r in results])
+    print("-" * 40)
+    print(f"{'MTL System Mean':<20} | {mean_mae:.4f}")
+    
+    return pd.DataFrame(results)
+
+# --- EXECUTION ---
+mae_mtl_df = calculate_mtl_mae_unscaled(model, test_loader, target_names, scaler2)
