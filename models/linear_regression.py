@@ -29,7 +29,6 @@ def evaluate_linear_reg_performance(y_true_data, y_pred_data, target_names):
     print(f"{'Task Name':<20} | {'a20-Index':<12} | {'RMSE':<10}")
     print("-" * 50)
     
-    a20_scores = []
     rmse_scores = []
 
     for i, name in enumerate(target_names):
@@ -39,19 +38,11 @@ def evaluate_linear_reg_performance(y_true_data, y_pred_data, target_names):
         
         # Calculate RMSE
         rmse = np.sqrt(mean_squared_error(true_col, pred_col))
-        
-        # Calculate a20-index
-        mask = (true_col != 0)
-        ratios = pred_col[mask] / true_col[mask]
-        a20 = np.mean((ratios >= 0.8) & (ratios <= 1.2))
-        
-        a20_scores.append(a20)
         rmse_scores.append(rmse)
         
-        print(f"{name:<20} | {a20:.4f}      | {rmse:.4f}")
 
     print("-" * 50)
-    print(f"{'Average (Mean)':<20} | {np.mean(a20_scores):.4f}      | {np.mean(rmse_scores):.4f}")
+    print(f"{np.mean(rmse_scores):.4f}")
 
 # --- EXECUTION ---
 target_names = ['Cement', 'Furnace_Slag', 'Fly_ash', 'Water_content', 
@@ -61,58 +52,4 @@ target_names = ['Cement', 'Furnace_Slag', 'Fly_ash', 'Water_content',
 # If it prints a warning, you need to find where your labels are stored.
 evaluate_linear_reg_performance(y_test, linear_reg_pred, target_names)
 
-#MAE
-def evaluate_mtl_mae_smart(model, test_loader, target_cols, scaler):
-    """
-    Collects MTL predictions, applies the Smart Check for scaling,
-    and calculates MAE in kg/m³.
-    """
-    model.eval()
-    all_preds = []
-    all_trues = []
 
-    # 1. Collect data from DataLoader
-    with torch.no_grad():
-        for x_batch, y_batch_dict in test_loader:
-            preds_dict = model(x_batch)
-            
-            # Stack the 7 tasks into a single row per sample
-            batch_preds = torch.stack([preds_dict[name].flatten() for name in target_cols], dim=1)
-            batch_trues = torch.stack([y_batch_dict[name].flatten() for name in target_cols], dim=1)
-            
-            all_preds.append(batch_preds.cpu().numpy())
-            all_trues.append(batch_trues.cpu().numpy())
-
-    # 2. Convert to large 2D arrays (Samples, 7)
-    y_pred_np = np.vstack(all_preds)
-    y_true_np = np.vstack(all_trues)
-
-    # 3. Always unscale y_true (y_test is scaled)
-    y_true_raw = scaler.inverse_transform(y_true_np)
-
-    # 4. THE SMART CHECK for Predictions
-    if np.max(y_pred_np) < 10:
-        print(">>> MTL Model: Scaled predictions detected. Unscaling to kg/m³...")
-        y_pred_raw = scaler.inverse_transform(y_pred_np)
-    else:
-        print(">>> MTL Model: Raw predictions detected. Calculating directly...")
-        y_pred_raw = y_pred_np
-
-    # 5. Compute MAE per Task
-    print(f"\n{'Output Task':<20} | {'MAE (kg/m³)':<15}")
-    print("-" * 45)
-
-    results_data = []
-    for i, name in enumerate(target_cols):
-        mae = mean_absolute_error(y_true_raw[:, i], y_pred_raw[:, i])
-        results_data.append({"Task": name, "MAE": mae})
-        print(f"{name:<20} | {mae:.4f}")
-
-    mean_mae = np.mean([r['MAE'] for r in results_data])
-    print("-" * 45)
-    print(f"{'MTL System Mean':<20} | {mean_mae:.4f}\n")
-    
-    return pd.DataFrame(results_data)
-
-# --- EXECUTION ---
-mae_mtl_df = evaluate_mtl_mae_smart(model, test_loader, target_names, scaler2)
