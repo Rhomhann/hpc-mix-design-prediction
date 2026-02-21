@@ -43,7 +43,7 @@ def evaluate_rf_performance(y_true_data, y_pred_data, target_names):
         rmse_scores.append(rmse)
 
     print("-" * 50)
-    print(f"{'Average (Mean)':<20} | {np.mean(a20_scores):.4f}      | {np.mean(rmse_scores):.4f}")
+    print(f"{np.mean(rmse_scores):.4f}")
 
 # --- EXECUTION ---
 target_names = [
