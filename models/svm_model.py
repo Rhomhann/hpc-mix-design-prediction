@@ -1,4 +1,5 @@
-Perculiar libraries
+#Perculair libraries-refer to deep_learning.py for more libraries
+
 from sklearn.svm import SVR
 from sklearn.multioutput import MultiOutputRegressor
 
