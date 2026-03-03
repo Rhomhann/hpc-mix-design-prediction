@@ -1,4 +1,4 @@
-#Perculiar library
+#Perculair libraries-refer to deep_learning.py for more libraries
 import xgboost as xgb
 
 #Model setup and training
